@@ -1,5 +1,6 @@
 package com.example.rickandmorty.ui.screens
 
+import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -25,47 +26,71 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.rememberAsyncImagePainter
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.example.rickandmorty.R
+import com.example.rickandmorty.logic.model.CharacterModels
 
 @Composable
-fun CharactersItem(item : CharacterModels) {
+fun CharactersItem(item: CharacterModels) {
+    val painter = rememberAsyncImagePainter(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(item.image)
+            .crossfade(true)
+            .listener(
+                onStart = { Log.d("Coil", "Image loading started for ${item.image}") },
+                onSuccess = { _, _ ->
+                    Log.d(
+                        "Coil",
+                        "Image loaded successfully for ${item.image}"
+                    )
+                },
+                onError = { _, throwable -> Log.e("Coil", "Error loading image: $throwable") }
+            )
+            .build(),
+        placeholder = painterResource(id = R.drawable.placeholder),
+        error = painterResource(id = R.drawable.placeholder)
+    )
 
-    if (item == null){
-        ShimmerPlaceholder()
-    } else {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White, RoundedCornerShape(8.dp))
 
-        Column(
+    ) {
+        // Image
+        androidx.compose.foundation.Image(
+            painter = painter,
+            contentDescription = item.name,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(4.dp)
-                .background(Color.White, RoundedCornerShape(8.dp))
-                .clip(RoundedCornerShape(8.dp))
-        ) {
-            AsyncImage(model = item.imageUrl, contentDescription = item.name,
-                modifier = Modifier.fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
-                contentScale = ContentScale.Crop
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
+            contentScale = ContentScale.Crop
+        )
+
+
+        // Name text
+        item.name?.let {
+            Text(
+                text = it,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-
-            item.name?.let {
-                Text(
-                    text = it,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
         }
     }
-
 }
-
 
 @Composable
 fun ShimmerPlaceholder() {
